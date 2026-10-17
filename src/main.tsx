@@ -1,6 +1,6 @@
 import { StrictMode, useState, type ComponentType } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Activity, BarChart3, Bell, Calendar, CalendarDays, CheckSquare, ChevronLeft, ChevronRight, ClipboardCheck, Home, Search, Settings, Star, Target, type LucideIcon } from 'lucide-react';
+import { Activity, BarChart3, Bell, Calendar, CheckSquare, ChevronLeft, ChevronRight, ClipboardCheck, Home, Search, Settings, Target, type LucideIcon } from 'lucide-react';
 import '@fontsource/be-vietnam-pro/vietnamese-400.css';
 import '@fontsource/be-vietnam-pro/vietnamese-500.css';
 import '@fontsource/be-vietnam-pro/vietnamese-600.css';
@@ -10,24 +10,24 @@ import '@fontsource/be-vietnam-pro/latin-500.css';
 import '@fontsource/be-vietnam-pro/latin-600.css';
 import '@fontsource/be-vietnam-pro/latin-700.css';
 import './styles.css';
-import { addDays, fmtH, fmtLong, fmtShort, fmtWeek, pct, today, weekStats } from './lib';
+import { addDays, fmtLong, fmtShort, fmtWeek, pct, today, weekStats } from './lib';
 import { Store, useStore, type Page } from './store';
-import { Bar, Logo, useTaskActions } from './ui';
+import { Bar, Logo } from './ui';
 import Dashboard from './pages/Dashboard';
-import { CalendarPage, MiniMonth, TasksPage } from './pages/Work';
+import { CalendarPage, TasksPage } from './pages/Work';
 import { MetricsPage } from './pages/Tracking';
 import { GoalsPage, ReviewPage, SettingsPage, StatsPage } from './pages/Insight';
 
 // page, menu label, icon, view, subtitle (null = show the "local" pill and today's date instead)
 const NAV: [Page, string, LucideIcon, ComponentType, string | null][] = [
-  ['home', 'Tổng quan', Home, Dashboard, 'Tập trung hôm nay để gần hơn với mục tiêu lớn.'],
+  ['home', 'Tổng quan', Home, Dashboard, ''],
   ['goals', 'Mục tiêu', Target, GoalsPage, null],
   ['metrics', 'Theo dõi', Activity, MetricsPage, null],
   ['tasks', 'Nhiệm vụ', CheckSquare, TasksPage, 'Quản lý công việc hằng ngày, tập trung vào những gì quan trọng.'],
   ['calendar', 'Lịch', Calendar, CalendarPage, null],
   ['review', 'Review tuần', ClipboardCheck, ReviewPage, null],
   ['stats', 'Thống kê', BarChart3, StatsPage, 'Theo dõi tiến độ học tập, làm việc và xây dựng thói quen của bạn.'],
-  ['settings', 'Cài đặt', Settings, SettingsPage, 'Tuỳ chỉnh trải nghiệm DerekOS theo cách của bạn.'],
+  ['settings', 'Cài đặt', Settings, SettingsPage, ''],
 ];
 
 function SearchBox() {
@@ -75,52 +75,34 @@ function Alerts() {
 
 function Shell() {
   const s = useStore();
-  const a = useTaskActions();
   const [, title, , View, sub] = NAV.find(([p]) => p === s.page) ?? NAV[0];
   const now = today();
   const w = weekStats(s, now);
-  const focus = s.tasks.filter((t) => t.due === now).slice(0, 3);
-  const [mini, setMini] = useState(now);
   const name = s.settings.name || 'bạn';
+  const subtitle = s.page === 'home' ? s.settings.quote || 'Tập trung hôm nay để gần hơn với mục tiêu lớn.' : sub;
   return (
     <div className="app">
       <aside className="side">
-        <div className="brand"><Logo /><span>Derek<b>OS</b></span></div>
+        <div className="brand"><Logo size={30} /><span><span>Target <b>Hunter</b></span><small>© derekdaydoi</small></span></div>
         <nav>
           {NAV.map(([p, label, Icon]) => (
             <button key={p} className={p === s.page ? 'on' : ''} onClick={() => s.go(p)}><Icon size={20} />{label}</button>
           ))}
         </nav>
         <span className="grow" />
-        {s.page === 'calendar' && (
-          <div className="sidecard">
-            <div className="mini-head">
-              <button className="icon-btn" onClick={() => setMini(addDays(mini.slice(0, 8) + '01', -1))}><ChevronLeft size={15} /></button>
-              <b>Tháng {+mini.slice(5, 7)}, {mini.slice(0, 4)}</b>
-              <button className="icon-btn" onClick={() => setMini(addDays(mini.slice(0, 8) + '01', 32))}><ChevronRight size={15} /></button>
-            </div>
-            <MiniMonth year={+mini.slice(0, 4)} month={+mini.slice(5, 7) - 1} />
-          </div>
-        )}
-        <div className="sidecard">
-          <small><CalendarDays size={15} />Tuần này · {fmtWeek(now)}</small>
+        <button className="weekmini" title="Mở Review tuần" onClick={() => s.go('review')}>
+          <span><small>Tuần này</small><b>{w.done}/{w.due.length} việc</b></span>
           <Bar value={pct(w.done, w.due.length)} />
-          <b>{w.done}/{w.due.length} việc xong</b>
-          <small>{fmtH(w.hours)} tập trung · {w.wins} mốc đạt</small>
-        </div>
-        <div className="sidecard">
-          <small><Star size={15} color="#f79009" fill="#f79009" />Ưu tiên hôm nay</small>
-          {focus.map((t) => <span key={t.id} className={t.done ? 'done' : ''}><i style={{ background: a.color(t) }} />{t.title}</span>)}
-          {!focus.length && <span className="muted">Chưa chọn việc nào</span>}
-        </div>
-        {s.page !== 'calendar' && s.settings.quote && <div className="sidequote"><p>{s.settings.quote}</p></div>}
-        {s.page !== 'calendar' && <div className="sidecard local"><b><i />Dữ liệu lưu trên máy</b><small>Riêng tư · An toàn</small></div>}
+        </button>
+        <button className={s.page === 'settings' ? 'user on' : 'user'} title="Cài đặt" onClick={() => s.go('settings')}>
+          <span className="avatar">{name[0].toUpperCase()}</span><b>{name}</b>
+        </button>
       </aside>
       <main>
         <div className="top">
           <div className="hello">
             <h1>{s.page === 'home' ? `Chào ${name}, 👋` : title}{sub === null && <span className="pill"><i />Chạy local trên máy</span>}</h1>
-            <p>{sub ?? fmtLong(now)}</p>
+            {subtitle !== '' && <p>{subtitle ?? fmtLong(now)}</p>}
           </div>
           <div className="tools">
             {s.page !== 'calendar' && (
@@ -133,7 +115,6 @@ function Shell() {
             {s.page !== 'calendar' && <button className="btn" onClick={() => s.setAnchor(now)}>Hôm nay</button>}
             <SearchBox />
             <Alerts />
-            <button className="avatar" title="Cài đặt cá nhân" onClick={() => s.go('settings')}>{name[0].toUpperCase()}</button>
           </div>
         </div>
         <div className="content"><View /></div>

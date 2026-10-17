@@ -1,39 +1,55 @@
-# DerekOS
+<p align="center">
+  <img src="logo/logo-horizontal.png" alt="Target Hunter" width="420">
+</p>
 
-![DerekOS](logo/logo-horizontal.png)
+<p align="center">
+  Ứng dụng desktop local-first cho Windows: nối việc hằng ngày với mục tiêu dài hạn,<br>
+  để học và làm luôn ra đầu ra phục vụ đích.
+</p>
 
-Ứng dụng desktop local-first cho Windows, giúp nối việc hằng ngày với một mục tiêu dài hạn.
-Dữ liệu nằm hoàn toàn trên máy bạn (SQLite), không cần tài khoản, không cần internet.
+<p align="center">
+  <a href="https://github.com/derekdaydoi/DerekOS/releases/latest/download/TargetHunter-Setup.exe">
+    <img src="https://img.shields.io/badge/Download-Windows%2010%20%2F%2011-386ff1?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows" height="48">
+  </a>
+</p>
 
-## Tải về
+<p align="center"><sub>TargetHunter-Setup.exe · 64-bit · khoảng 113 MB · <a href="https://github.com/derekdaydoi/DerekOS/releases/latest">Các phiên bản</a></sub></p>
 
-[![Tải DerekOS cho Windows](https://img.shields.io/badge/T%E1%BA%A3i%20v%E1%BB%81-DerekOS%20cho%20Windows-1673ff?style=for-the-badge&logo=windows)](https://github.com/derekdaydoi/DerekOS/releases/latest/download/DerekOS-Setup.exe)
+---
 
-Link trực tiếp: [DerekOS-Setup.exe](https://github.com/derekdaydoi/DerekOS/releases/latest/download/DerekOS-Setup.exe) (Windows 10/11, 64-bit, khoảng 113 MB)
+## Ảnh demo
+
+| Tổng quan | Mục tiêu |
+|---|---|
+| ![Tổng quan](docs/screenshots/home.png) | ![Mục tiêu](docs/screenshots/goals.png) |
+
+| Theo dõi biến số | Nhiệm vụ |
+|---|---|
+| ![Theo dõi](docs/screenshots/metrics.png) | ![Nhiệm vụ](docs/screenshots/tasks.png) |
+
+| Lịch | Review tuần |
+|---|---|
+| ![Lịch](docs/screenshots/calendar.png) | ![Review tuần](docs/screenshots/review.png) |
 
 ## Tính năng
 
 - **North Star**: một mục tiêu chính, có số hiện tại, số đích và tốc độ tăng trưởng cần đạt mỗi năm.
-- **Nhánh mục tiêu và mốc**: chia mục tiêu lớn thành các nhánh, mỗi nhánh gồm các mốc cụ thể (khoá học, dự án…). Xong mốc nào tick mốc đó; tiến độ bằng số mốc đã tick.
-- **Theo dõi biến số**: tự định nghĩa các con số cần đo (cân nặng, thu nhập, số buổi chạy…), đặt mục tiêu, ghi giá trị theo ngày và xem biểu đồ xu hướng.
-- **Nhiệm vụ**: bảng nhiệm vụ theo nhóm (quá hạn, tuần này, sắp tới, đã xong), lọc theo trạng thái và nhãn. Focus Filter giới hạn tối đa 3 việc ưu tiên mỗi ngày.
-- **Lịch**: xem theo tháng, tuần hoặc cả năm; bấm vào ô ngày để thêm việc. Có nhắc việc theo giờ khi app đang mở.
-- **Review tuần**: số liệu tự tính, danh sách việc chưa xong theo nhóm và ba ô tự đánh giá.
-- **Thống kê**: giờ tập trung theo tuần (8 tuần, 6 tháng, 1 năm), bản đồ nhịp làm việc 16 tuần, tiến độ từng nhánh.
-- **Dữ liệu**: sao lưu `.sqlite`, xuất/nhập JSON, xuất CSV nhiệm vụ.
+- **Nhánh mục tiêu và mốc**: chia mục tiêu lớn thành các nhánh; mỗi nhánh gồm các mốc đầu ra cụ thể. Tiến độ bằng số mốc đã hoàn thành.
+- **Theo dõi biến số**: tự định nghĩa con số cần đo (thu nhập, cân nặng, số buổi chạy…), đặt mục tiêu, ghi theo ngày và xem xu hướng.
+- **Nhiệm vụ**: bảng theo nhóm (quá hạn, tuần này, sắp tới, đã xong), lọc theo trạng thái và nhãn. Tối đa 3 việc ưu tiên mỗi ngày.
+- **Lịch**: xem theo tháng, tuần hoặc năm; nhắc việc theo giờ khi app đang mở.
+- **Review tuần**: số liệu tự tính kèm thay đổi so với tuần trước (WoW), việc chưa xong theo nhóm, ba câu tự đánh giá.
+- **Thống kê**: giờ tập trung theo tuần, bản đồ nhịp làm việc 16 tuần, tiến độ từng nhánh.
+- **Dữ liệu của bạn**: lưu cục bộ bằng SQLite, không cần tài khoản hay internet; sao lưu, xuất/nhập JSON, xuất CSV.
 
-## Cài đặt để dùng
+## Cài đặt
 
-1. Bấm nút **Tải về** ở trên để lấy `DerekOS-Setup.exe`.
-2. Chạy file vừa tải. App tự cài và tạo lối tắt trên Desktop, Start Menu.
+1. Bấm **Download** ở trên để tải `TargetHunter-Setup.exe`.
+2. Chạy file. App tự cài và tạo lối tắt **Target Hunter** trên Desktop và Start Menu.
 
-Installer chưa ký số nên
-Windows SmartScreen có thể cảnh báo: chọn **More info → Run anyway**.
+Installer chưa ký số nên Windows SmartScreen có thể cảnh báo: chọn **More info → Run anyway**.
 
-Lần mở đầu tiên app tạo sẵn dữ liệu mẫu (mục tiêu, nhánh, mốc, nhiệm vụ, biến số). Đây chỉ là ví dụ:
-sửa trực tiếp trong app, hoặc xoá sạch tại **Cài đặt → Xoá toàn bộ dữ liệu** rồi nhập mục tiêu của bạn.
-
-Dữ liệu lưu tại `%APPDATA%\DerekOS\derekos.sqlite`.
+Lần mở đầu tiên app có sẵn dữ liệu mẫu để bạn xem cách dùng. Sửa trực tiếp, hoặc xoá tại **Cài đặt → Xoá toàn bộ dữ liệu** rồi nhập mục tiêu của bạn. Dữ liệu nằm ở `%APPDATA%\DerekOS\derekos.sqlite` (giữ tên cũ để bản cập nhật không làm mất dữ liệu).
 
 ## Chạy từ mã nguồn
 
@@ -45,36 +61,27 @@ npm start        # build giao diện rồi mở app
 npm run dist     # tạo installer trong release/
 ```
 
-Lệnh khác: `npm run typecheck`, `npm run icon` (sinh lại bộ logo và icon).
+Lưu ý khi build trên Windows:
 
-### Lưu ý khi build trên Windows
-
-- Đặt dự án ở đường dẫn ngắn (ví dụ `C:\dev\derekos`). Đường dẫn quá dài làm bước tạo installer NSIS lỗi.
+- Đặt dự án ở đường dẫn ngắn (ví dụ `C:\dev\target-hunter`); đường dẫn quá dài làm bước tạo installer lỗi.
 - Nếu `npm run dist` báo `EPERM ... rename ... .tmp`, thường do antivirus đang quét thư mục vừa giải nén: chạy lại lệnh.
-- Nếu `npm start` không mở cửa sổ, kiểm tra biến môi trường `ELECTRON_RUN_AS_NODE` và bỏ nó đi.
+- Nếu `npm start` không mở cửa sổ, bỏ biến môi trường `ELECTRON_RUN_AS_NODE`.
 
 ## Cấu trúc
 
 ```
-electron/   main process: SQLite (sql.js), IPC, nhắc việc, cửa sổ, tự phóng giao diện theo chiều rộng
-src/        giao diện React + TypeScript
-  lib.ts      kiểu dữ liệu, xử lý ngày, tính tiến độ
-  store.tsx   trạng thái dùng chung, đọc/ghi database
-  ui.tsx      thành phần dùng lại (thẻ, modal, hình minh hoạ, logo)
-  styles.css  toàn bộ style
-  pages/
-    Dashboard.tsx  Tổng quan, thẻ North Star
-    Insight.tsx    Mục tiêu, Thống kê, Review tuần, Cài đặt
-    Work.tsx       Nhiệm vụ, Lịch
-    Tracking.tsx   Theo dõi biến số, biểu đồ đường
-scripts/    sinh logo và icon
-logo/       bộ logo (SVG, PNG)
+electron/      main process: SQLite (sql.js), IPC, nhắc việc, cửa sổ
+src/           giao diện React + TypeScript
+  lib.ts         kiểu dữ liệu, ngày tháng, tính tiến độ
+  store.tsx      trạng thái dùng chung, đọc/ghi dữ liệu
+  ui.tsx         thành phần dùng lại (thẻ, cửa sổ, logo)
+  styles.css     toàn bộ style
+  pages/         Dashboard, Insight (Mục tiêu, Thống kê, Review, Cài đặt), Work (Nhiệm vụ, Lịch), Tracking
+scripts/       sinh logo và icon
+logo/          bộ logo
+docs/          ảnh demo
 ```
 
-Muốn đổi dữ liệu mẫu mặc định, sửa hàm `seed` trong `electron/main.cjs`.
+Electron, React, TypeScript, Vite, sql.js, electron-builder. Font Be Vietnam Pro đóng gói kèm.
 
-## Công nghệ
-
-Electron, React, TypeScript, Vite, sql.js (SQLite), electron-builder. Font: Be Vietnam Pro (đóng gói kèm, chạy offline).
-
-Để chạy thử trên bộ dữ liệu riêng, đặt biến môi trường `DEREKOS_DATA` trỏ tới một thư mục trống trước khi mở app.
+© derekdaydoi

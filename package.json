@@ -1,8 +1,8 @@
 {
   "name": "derekos",
-  "productName": "DerekOS",
-  "version": "1.3.1",
-  "description": "DerekOS - he dieu hanh ca nhan local-first cho muc tieu, nhiem vu va review tuan",
+  "productName": "Target Hunter",
+  "version": "1.5.0",
+  "description": "Target Hunter - local-first goal, task and weekly review app",
   "author": "Derek",
   "private": true,
   "main": "electron/main.cjs",
@@ -15,7 +15,7 @@
   },
   "build": {
     "appId": "com.derekos.app",
-    "productName": "DerekOS",
+    "productName": "Target Hunter",
     "files": [
       "dist/**",
       "electron/**"
@@ -30,8 +30,10 @@
     "nsis": {
       "oneClick": true,
       "perMachine": false,
-      "artifactName": "DerekOS-Setup.exe",
-      "shortcutName": "DerekOS", "createDesktopShortcut": "always"
+      "artifactName": "TargetHunter-Setup.exe",
+      "shortcutName": "Target Hunter",
+      "createDesktopShortcut": "always",
+      "uninstallDisplayName": "Target Hunter"
     }
   },
   "dependencies": {

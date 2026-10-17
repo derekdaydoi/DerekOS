@@ -1,14 +1,15 @@
-import { useState, type ChangeEvent, type ReactNode } from 'react';
+import { useEffect, useState, type ChangeEvent, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { Clock, MoreHorizontal, Star, X } from 'lucide-react';
 import { CATS, MAX_PRIORITY, fmtH, fmtShort, today, type Task } from './lib';
 import { useStore } from './store';
 
 export function Logo({ size = 30 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 100 100" fill="none" stroke="#1673ff" strokeWidth="17">
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none" stroke="#386ff1" strokeWidth="17">
       <path d="M46.1 18.24A32 32 0 1 0 81.82 53.34" />
-      <path d="M56.65 18.7A32 32 0 0 1 81.69 45.55" />
-      <circle cx="50" cy="50" r="11.5" fill="#1673ff" stroke="none" />
+      <path d="M56.65 18.7A32 32 0 0 1 81.69 45.55" stroke="#ff922f" />
+      <circle cx="50" cy="50" r="11.5" fill="#386ff1" stroke="none" />
     </svg>
   );
 }
@@ -31,26 +32,6 @@ export function Mountain({ className = 'art' }: { className?: string }) {
     </svg>
   );
 }
-export const ProfileArt = () => (
-  <svg className="art side-art" viewBox="0 0 220 180" fill="none" aria-hidden>
-    <ellipse cx="110" cy="160" rx="100" ry="14" fill="#eaf2ff" /><ellipse cx="170" cy="40" rx="40" ry="26" fill="#eef4ff" />
-    <path d="M18 150c-8-30 2-52 18-66 2 26 8 44 20 66Z" fill="#b9d3ff" /><path d="M200 150c8-22 4-40-8-52-4 20-10 34-18 52Z" fill="#cfe1ff" />
-    <rect x="52" y="22" width="116" height="128" rx="14" fill="#fff" stroke="#e3ecfb" />
-    <circle cx="110" cy="64" r="22" fill="#cfe1ff" /><circle cx="110" cy="58" r="8" fill="#3b82f6" /><path d="M96 78a14 10 0 0 1 28 0Z" fill="#3b82f6" />
-    <rect x="80" y="100" width="60" height="7" rx="3.5" fill="#b9d3ff" /><rect x="80" y="116" width="40" height="7" rx="3.5" fill="#dbe8ff" />
-    <circle cx="166" cy="132" r="19" fill="#fff" stroke="#e3ecfb" /><path d="m158 140 3-9 10-10 6 6-10 10Z" stroke="#1673ff" strokeWidth="2.5" strokeLinejoin="round" />
-  </svg>
-);
-export const DbArt = () => (
-  <svg className="art side-art" viewBox="0 0 220 220" fill="none" aria-hidden>
-    <ellipse cx="110" cy="198" rx="96" ry="14" fill="#eaf2ff" /><ellipse cx="140" cy="40" rx="50" ry="28" fill="#eef4ff" />
-    {[150, 110, 70].map((y, i) => (
-      <g key={y}><path d={`M50 ${y}v34c0 10 27 18 60 18s60-8 60-18v-34Z`} fill={['#7fb0ff', '#9cc3ff', '#b9d3ff'][i]} /><ellipse cx="110" cy={y} rx="60" ry="18" fill={['#a9cbff', '#c4dcff', '#dbe8ff'][i]} /></g>
-    ))}
-    <circle cx="164" cy="170" r="26" fill="#1673ff" stroke="#fff" strokeWidth="5" />
-    <path d="M152 168a12 12 0 0 1 21-7m3 11a12 12 0 0 1-21 7m18-24v6h-6m-10 16v-6h6" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
 const Deco = ({ color, kind }: { color: string; kind: 'bars' | 'line' }) => (
   <svg className="deco" viewBox="0 0 80 40" fill="none" aria-hidden>
     {kind === 'line' ? (
@@ -72,11 +53,21 @@ export const IconTile = ({ color = '#1673ff', size = '', children }: { color?: s
   <span className={`itile ${size}`} style={{ background: color + '1a', color }}>{children}</span>
 );
 
-export function StatTile(p: { icon: ReactNode; color: string; label: string; value: string; sub: string; deco?: 'bars' | 'line' }) {
+/** Week-over-week change in %; null when last week had nothing to compare against. */
+export const wow = (cur: number, last: number) => (last ? Math.round(((cur - last) / last) * 100) : cur ? null : 0);
+
+function Trend({ pct, inverse }: { pct: number | null; inverse?: boolean }) {
+  if (pct === null) return <small className="trend">— WoW</small>;
+  const good = inverse ? pct < 0 : pct > 0;
+  const cls = pct === 0 ? 'trend' : good ? 'trend up' : 'trend down';
+  return <small className={cls}>{pct > 0 ? '▲' : pct < 0 ? '▼' : '■'} {Math.abs(pct)}% WoW</small>;
+}
+
+export function StatTile(p: { icon: ReactNode; color: string; label: string; value: string; sub?: string; trend?: number | null; inverse?: boolean; deco?: 'bars' | 'line' }) {
   return (
     <section className="card stat" style={{ background: `linear-gradient(135deg, #fff 55%, ${p.color}14)` }}>
       <IconTile color={p.color} size="round">{p.icon}</IconTile>
-      <div><small>{p.label}</small><b>{p.value}</b><small>{p.sub}</small></div>
+      <div><small>{p.label}</small><b>{p.value}</b>{p.trend !== undefined ? <Trend pct={p.trend} inverse={p.inverse} /> : p.sub && <small>{p.sub}</small>}</div>
       <Deco color={p.color} kind={p.deco ?? 'bars'} />
     </section>
   );
@@ -97,8 +88,14 @@ export function Field({ label, children, wide }: { label: string; children: Reac
   return <label className={wide ? 'field wide' : 'field'}><span>{label}</span>{children}</label>;
 }
 
+/** Rendered into <body> so a card it is opened from (overflow, stacking, position) can never trap it. */
 export function Modal(p: { title: string; onClose(): void; onSave(): void; onDelete?: () => void; children: ReactNode }) {
-  return (
+  useEffect(() => {
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && p.onClose();
+    window.addEventListener('keydown', esc);
+    return () => window.removeEventListener('keydown', esc);
+  }, [p]);
+  return createPortal(
     <div className="overlay" onMouseDown={(e) => e.target === e.currentTarget && p.onClose()}>
       <form className="modal" onSubmit={(e) => { e.preventDefault(); p.onSave(); }}>
         <header><h3>{p.title}</h3><button type="button" className="icon-btn" onClick={p.onClose}><X size={18} /></button></header>
@@ -110,7 +107,8 @@ export function Modal(p: { title: string; onClose(): void; onSave(): void; onDel
           <button type="submit" className="btn primary">Lưu</button>
         </footer>
       </form>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

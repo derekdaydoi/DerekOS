@@ -3,14 +3,12 @@ const path = require('path');
 const fs = require('fs');
 const initSqlJs = require('sql.js');
 
-const TABLES = ['settings', 'tracks', 'tasks', 'deliverables', 'notes', 'reviews', 'metrics', 'metric_logs', 'milestones'];
+const TABLES = ['settings', 'tracks', 'milestones', 'tasks', 'reviews', 'metrics', 'metric_logs'];
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT);
-CREATE TABLE IF NOT EXISTS tracks(id INTEGER PRIMARY KEY, name TEXT NOT NULL, color TEXT, target_hours REAL DEFAULT 100, base_hours REAL DEFAULT 0, done INTEGER DEFAULT 0, done_at TEXT);
+CREATE TABLE IF NOT EXISTS tracks(id INTEGER PRIMARY KEY, name TEXT NOT NULL, color TEXT, done INTEGER DEFAULT 0, done_at TEXT);
 CREATE TABLE IF NOT EXISTS milestones(id INTEGER PRIMARY KEY, track_id INTEGER NOT NULL, title TEXT NOT NULL, done INTEGER DEFAULT 0, done_at TEXT);
 CREATE TABLE IF NOT EXISTS tasks(id INTEGER PRIMARY KEY, title TEXT NOT NULL, category TEXT, track_id INTEGER, due TEXT, est REAL DEFAULT 0, done INTEGER DEFAULT 0, done_at TEXT, priority INTEGER DEFAULT 0, t_start TEXT, t_end TEXT);
-CREATE TABLE IF NOT EXISTS deliverables(id INTEGER PRIMARY KEY, title TEXT NOT NULL, date TEXT, category TEXT, track_id INTEGER, file TEXT, note TEXT);
-CREATE TABLE IF NOT EXISTS notes(id INTEGER PRIMARY KEY, title TEXT, body TEXT, updated TEXT);
 CREATE TABLE IF NOT EXISTS reviews(week TEXT PRIMARY KEY, rating TEXT, wins TEXT, blockers TEXT, focus TEXT);
 CREATE TABLE IF NOT EXISTS metrics(id INTEGER PRIMARY KEY, name TEXT NOT NULL, unit TEXT, start REAL DEFAULT 0, target REAL);
 CREATE TABLE IF NOT EXISTS metric_logs(id INTEGER PRIMARY KEY, metric_id INTEGER NOT NULL, date TEXT NOT NULL, value REAL NOT NULL, UNIQUE(metric_id, date));
@@ -18,7 +16,6 @@ CREATE INDEX IF NOT EXISTS idx_tasks_due ON tasks(due);`;
 
 let db, win, saveTimer;
 const dbPath = () => path.join(app.getPath('userData'), 'derekos.sqlite');
-const filesDir = () => path.join(app.getPath('userData'), 'files');
 
 const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const shift = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
@@ -180,15 +177,6 @@ function registerIpc() {
   ipcMain.handle('data:reset', () => { replaceAll({}); seed(false); flush(); return true; });
   ipcMain.handle('data:openDir', () => shell.openPath(app.getPath('userData')));
 
-  ipcMain.handle('file:attach', async () => {
-    const { filePaths } = await dialog.showOpenDialog(win, { properties: ['openFile'] });
-    if (!filePaths[0]) return null;
-    fs.mkdirSync(filesDir(), { recursive: true });
-    const name = `${Date.now()}-${path.basename(filePaths[0])}`;
-    fs.copyFileSync(filePaths[0], path.join(filesDir(), name));
-    return name;
-  });
-  ipcMain.handle('file:open', (_e, name) => shell.openPath(path.join(filesDir(), path.basename(String(name)))));
 }
 
 // ---------- notification scheduler ----------
@@ -214,25 +202,26 @@ function startReminders() {
 // ---------- window ----------
 function createWindow() {
   win = new BrowserWindow({
-    width: 1440, height: 900, minWidth: 1180, minHeight: 720, show: false, backgroundColor: '#f3f6fb',
+    width: 1440, height: 900, minWidth: 1100, minHeight: 600, show: false, backgroundColor: '#f4f6f9',
     icon: path.join(__dirname, 'icon.png'),
     titleBarStyle: 'hidden',
-    titleBarOverlay: { color: '#f3f6fb', symbolColor: '#0f172a', height: 40 },
+    titleBarOverlay: { color: '#f4f6f9', symbolColor: '#17243b', height: 40 },
     webPreferences: { preload: path.join(__dirname, 'preload.cjs'), contextIsolation: true, sandbox: true },
   });
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   win.webContents.on('will-navigate', (e) => e.preventDefault());
   win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'), { hash: process.env.DEREKOS_ROUTE || '' });
+  // Dev aid: DEREKOS_SIZE=<w>x<h> sets the content size for layout checks.
+  if (process.env.DEREKOS_SIZE) win.setContentSize(...process.env.DEREKOS_SIZE.split('x').map(Number));
   win.once('ready-to-show', () => win.show());
+  // Chromium remembers the zoom of earlier versions (which scaled the UI); always render at 100%.
+  win.webContents.on('did-finish-load', () => win.webContents.setZoomFactor(1));
 
-  // Scale the UI with the window so the layout fills large screens instead of leaving small objects in big blocks.
-  const fit = () => win.webContents.setZoomFactor(Math.min(1.6, Math.max(0.8, win.getContentSize()[0] / 1600)));
-  win.webContents.on('did-finish-load', fit);
-  win.on('resize', fit);
 
   // Dev aid: DEREKOS_SHOT=<png path> captures the window and exits.
   if (process.env.DEREKOS_SHOT) {
     win.webContents.once('did-finish-load', () => setTimeout(async () => {
+      if (process.env.DEREKOS_EVAL) fs.writeFileSync(process.env.DEREKOS_SHOT + '.txt', String(await win.webContents.executeJavaScript(process.env.DEREKOS_EVAL)));
       if (process.env.DEREKOS_SCROLL) await win.webContents.executeJavaScript("document.querySelector('.content').scrollTo(0, 1e6)");
       fs.writeFileSync(process.env.DEREKOS_SHOT, (await win.webContents.capturePage()).toPNG());
       app.quit();
@@ -240,8 +229,9 @@ function createWindow() {
   }
 }
 
+// The app was renamed DerekOS -> Target Hunter; keep reading the original data folder so nothing is lost.
 // Dev aid: DEREKOS_DATA=<dir> runs against a separate data folder.
-if (process.env.DEREKOS_DATA) app.setPath('userData', process.env.DEREKOS_DATA);
+app.setPath('userData', process.env.DEREKOS_DATA || path.join(app.getPath('appData'), 'DerekOS'));
 
 if (!app.requestSingleInstanceLock()) app.quit();
 else {

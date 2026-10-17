@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type MouseEvent } from 'react';
-import { Activity, BarChart3, CalendarDays, Lightbulb, Minus, MoreHorizontal, Plus, Target, Trash2, TrendingDown, TrendingUp } from 'lucide-react';
+import { Activity, BarChart3, Minus, MoreHorizontal, Plus, Target, Trash2, TrendingDown, TrendingUp } from 'lucide-react';
 import { SERIES, addDays, fmtN, fmtShort, metricView, parse, today, type Metric } from '../lib';
 import { useStore } from '../store';
 import { Bar, Empty, Field, IconTile, Modal, Mountain, useForm } from '../ui';
@@ -166,7 +166,7 @@ function MetricCard({ m, color, onEdit }: { m: Metric; color: string; onEdit(): 
           {v.progress != null && <div className="barline"><Bar value={v.progress} color={color} /><b>{v.progress}%</b></div>}
         </div>
         <div className="sparkbox" style={{ background: `linear-gradient(180deg, ${color}0d, ${color}03)` }}>
-          <LineChart compact height={96} points={v.pts} target={m.target} unit={m.unit} color={color} />
+          <LineChart compact height={140} points={v.pts} target={m.target} unit={m.unit} color={color} />
         </div>
       </div>
       <div className="facts">
@@ -184,11 +184,6 @@ function MetricCard({ m, color, onEdit }: { m: Metric; color: string; onEdit(): 
   );
 }
 
-const TIPS: [typeof Target, string, string, string][] = [
-  [CalendarDays, '#1673ff', 'Ghi chép đều đặn', 'Cập nhật số liệu theo một nhịp cố định: mỗi sáng, hoặc sau mỗi buổi tập.'],
-  [BarChart3, '#8b5cf6', 'Quan sát xu hướng', 'Biểu đồ giúp bạn nhìn thấy bức tranh lớn thay vì chỉ một con số đơn lẻ.'],
-  [Target, '#12b76a', 'Điều chỉnh kịp thời', 'Nếu tiến độ chưa như mong muốn, hãy điều chỉnh thói quen hoặc mục tiêu cho phù hợp.'],
-];
 
 export function MetricsPage() {
   const s = useStore();
@@ -197,20 +192,14 @@ export function MetricsPage() {
     <div className="stack">
       <section className="card banner">
         <div>
-          <h2>Biến những con số thành phiên bản tốt hơn của bạn</h2>
-          <p>Theo dõi các chỉ số quan trọng để hiểu rõ tiến trình, duy trì động lực và điều chỉnh thói quen kịp thời.</p>
+          <h2>Biến con số thành tiến bộ</h2>
+          <p>Ghi số đều đặn, nhìn xu hướng, chỉnh kịp thời.</p>
         </div>
         <Mountain />
         <button className="btn primary lg" onClick={() => setEdit({})}><Plus size={16} />Thêm biến số</button>
       </section>
       <div className="metrics">{s.metrics.map((m, i) => <MetricCard key={m.id} m={m} color={SERIES[i % SERIES.length]} onEdit={() => setEdit(m)} />)}</div>
       {!s.metrics.length && <section className="card"><Empty>Chưa có biến số nào. Ví dụ: cân nặng, thu nhập, số buổi chạy mỗi tuần.</Empty></section>}
-      <section className="card">
-        <header className="head"><IconTile color="#f79009" size="lg"><Lightbulb size={22} /></IconTile><div><h2>Mẹo sử dụng</h2><p>Theo dõi đều đặn để thấy rõ tiến trình và duy trì động lực lâu dài.</p></div></header>
-        <div className="tips">
-          {TIPS.map(([Icon, c, title, text]) => <div key={title}><IconTile color={c}><Icon size={20} /></IconTile><span><b>{title}</b><small>{text}</small></span></div>)}
-        </div>
-      </section>
       {edit && <MetricModal metric={edit} onClose={() => setEdit(null)} />}
     </div>
   );

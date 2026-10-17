@@ -11,6 +11,4 @@ contextBridge.exposeInMainWorld('api', {
   backup: call('data:backup'),
   reset: call('data:reset'),
   openDataDir: call('data:openDir'),
-  attachFile: call('file:attach'),
-  openFile: call('file:open'),
 });

@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   Activity, ArrowRight, BarChart3, BookOpen, Briefcase, CalendarDays, CheckCircle2, ChevronDown, ChevronRight, Clock, Code2, Database, Download,
   FileText, Flag, FolderOpen, LayoutGrid, Layers, List, MoreHorizontal, Plus, Save, ShieldCheck, Sun, Target, Trash2, Upload, User,
 } from 'lucide-react';
 import { CATS, WDS, addDays, api, fmtH, fmtShort, monday, pct, today, trackProgress, weekStats, type Milestone, type Task, type Track } from '../lib';
 import { useStore } from '../store';
-import { Bar, DbArt, Empty, Field, Head, IconTile, Modal, ProfileArt, StatTile, Tag, useForm, useTaskActions } from '../ui';
+import { Bar, Empty, Field, Head, IconTile, Modal, StatTile, wow, Tag, useForm, useTaskActions } from '../ui';
 import { NorthStar, TrackList } from './Dashboard';
 import { LineChart } from './Tracking';
 
@@ -46,12 +46,6 @@ function TrackCard({ t, onEdit }: { t: Track; onEdit(): void }) {
     setTitle('');
   };
   const toggle = (m: Milestone) => s.exec('UPDATE milestones SET done = ?, done_at = ? WHERE id = ?', [m.done ? 0 : 1, m.done ? null : now, m.id]);
-  // ticking the branch ticks every milestone in it (or the branch itself when it has none)
-  const toggleAll = async () => {
-    const done = p.pct === 100 ? 0 : 1;
-    await s.exec('UPDATE milestones SET done = ?, done_at = ? WHERE track_id = ?', [done, done ? now : null, t.id]);
-    await s.exec('UPDATE tracks SET done = ?, done_at = ? WHERE id = ?', [done, done ? now : null, t.id]);
-  };
   const hidden = p.items.length - 2;
   return (
     <section className="card goalcard">
@@ -62,7 +56,6 @@ function TrackCard({ t, onEdit }: { t: Track; onEdit(): void }) {
       </header>
       <div className="barline"><Bar value={p.pct} color={t.color} /><b>{p.pct}%</b></div>
       <small>{p.done} / {p.total} mốc hoàn thành</small>
-      <label className="row"><input type="checkbox" checked={p.pct === 100} onChange={toggleAll} /><span className="title">Đánh dấu cả nhánh đã hoàn thành</span></label>
       {(open ? p.items : p.items.slice(0, 2)).map((m) => (
         <div key={m.id} className={m.done ? 'row done' : 'row'}>
           <input type="checkbox" checked={!!m.done} onChange={() => toggle(m)} />
@@ -92,7 +85,7 @@ export function GoalsPage() {
         <div className="c8"><NorthStar /></div>
         <div className="c4"><TrackList title="Tiến độ theo nhánh mục tiêu" /></div>
       </div>
-      <Head icon={<Layers size={22} />} title={`Các nhánh mục tiêu (${s.tracks.length})`} sub="Mỗi nhánh là một chặng trong hành trình đạt mục tiêu lớn. Thêm mốc cho từng nhánh và tick khi hoàn thành.">
+      <Head icon={<Layers size={22} />} title={`Các nhánh mục tiêu (${s.tracks.length})`}>
         <div className="seg soft">
           <button className={view === 'grid' ? 'on' : ''} onClick={() => setView('grid')}><LayoutGrid size={15} />Dạng lưới</button>
           <button className={view === 'list' ? 'on' : ''} onClick={() => setView('list')}><List size={15} />Dạng danh sách</button>
@@ -196,14 +189,14 @@ function ReviewForm({ week }: { week: string }) {
   };
   return (
     <section className="card">
-      <Head icon={<Activity size={22} />} title="Nhìn lại tuần" sub="Dành vài phút để ghi lại những điều quan trọng. Sự nhỏ bé hôm nay tạo nên phiên bản tốt hơn ngày mai.">
+      <Head icon={<Activity size={22} />} title="Nhìn lại tuần">
         <button className="btn primary lg" onClick={save}><Save size={16} />Lưu review</button>
       </Head>
       <div className="utabs">{['Tốt', 'Ổn', 'Chưa tốt'].map((x) => <button key={x} className={f.rating === x ? 'on' : ''} onClick={() => setF({ ...f, rating: x })}>{x}</button>)}</div>
       <div className="panels">
         {PANELS.map(([title, key, Icon, color, hint, placeholder]) => (
           <div key={key} style={{ background: `linear-gradient(160deg, ${color}12, ${color}05)`, borderColor: color + '2e' }}>
-            <header><IconTile color={color} size="round"><Icon size={20} /></IconTile><span><b>{title}</b><small>{hint}</small></span></header>
+            <header><IconTile color={color} size="round"><Icon size={20} /></IconTile><b>{title}</b></header>
             <textarea {...bind(key)} placeholder={placeholder} />
           </div>
         ))}
@@ -218,7 +211,6 @@ export function ReviewPage() {
   const w = weekStats(s, s.anchor);
   const last = weekStats(s, addDays(s.anchor, -7));
   const missed = w.due.filter((t) => !t.done);
-  const openMilestones = s.milestones.filter((m) => !m.done).length;
   const line = (t: Task) => (
     <div key={t.id} className="pillrow">
       <input type="checkbox" className="round" checked={false} onChange={() => a.toggle(t)} />
@@ -228,13 +220,13 @@ export function ReviewPage() {
   return (
     <div className="stack">
       <div className="tiles">
-        <StatTile icon={<CheckCircle2 size={22} />} color="#12b76a" label="Nhiệm vụ hoàn thành" value={`${w.done}/${w.due.length}`} sub={`Còn ${missed.length} việc cần hoàn thành`} />
-        <StatTile icon={<Clock size={22} />} color="#1673ff" label="Thời gian tập trung" value={fmtH(w.hours)} sub={signed(w.hours - last.hours, 'h')} />
-        <StatTile icon={<Target size={22} />} color="#8b5cf6" label="Mốc mục tiêu đạt được" value={String(w.wins)} sub={`Còn ${openMilestones} mốc cần đạt`} deco="line" />
-        <StatTile icon={<FileText size={22} />} color="#f79009" label="Việc chưa xong" value={String(missed.length)} sub="Cần tiếp tục tuần sau" deco="line" />
+        <StatTile icon={<CheckCircle2 size={22} />} color="#12b76a" label="Nhiệm vụ hoàn thành" value={`${w.done}/${w.due.length}`} trend={wow(w.done, last.done)} />
+        <StatTile icon={<Clock size={22} />} color="#1673ff" label="Thời gian tập trung" value={fmtH(w.hours)} trend={wow(w.hours, last.hours)} />
+        <StatTile icon={<Target size={22} />} color="#8b5cf6" label="Mốc mục tiêu đạt được" value={String(w.wins)} trend={wow(w.wins, last.wins)} deco="line" />
+        <StatTile icon={<FileText size={22} />} color="#f79009" label="Việc chưa xong" value={String(missed.length)} trend={wow(missed.length, last.due.length - last.done)} inverse deco="line" />
       </div>
       <section className="card">
-        <Head icon={<Target size={22} />} color="#f04438" title="Danh sách chưa xong trong tuần" sub={`${missed.length} việc · Cần tiếp tục thực hiện trong tuần tới`}>
+        <Head icon={<Target size={22} />} color="#f04438" title={`Danh sách chưa xong trong tuần (${missed.length})`}>
           <button className="btn" onClick={() => s.go('tasks')}>Xem tất cả<ArrowRight size={14} /></button>
         </Head>
         <div className="buckets">
@@ -255,59 +247,81 @@ export function ReviewPage() {
 }
 
 // ---------- settings ----------
+/** A setting saved on its own when the field is left (text) or changed (pickers): one save mechanism, no buttons. */
+function SettingInput({ k, label, type = 'text', max, onSaved }: { k: string; label: string; type?: string; max?: number; onSaved(): void }) {
+  const s = useStore();
+  const [v, setV] = useState(s.settings[k] ?? '');
+  useEffect(() => setV(s.settings[k] ?? ''), [s.settings[k]]); // e.g. after a data reset
+  const commit = async (next = v) => {
+    if (next === (s.settings[k] ?? '')) return;
+    await s.setSetting(k, next);
+    onSaved();
+  };
+  return (
+    <Field label={label}>
+      <input type={type} value={v} maxLength={max}
+        onChange={(e) => { setV(e.target.value); if (type === 'time') commit(e.target.value); }}
+        onBlur={() => commit()} onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()} />
+    </Field>
+  );
+}
+
+function Saved({ at }: { at: number }) {
+  return <span className={at ? 'saved on' : 'saved'} key={at}><CheckCircle2 size={15} />Đã lưu</span>;
+}
+
+function ActionRow({ title, hint, children }: { title: string; hint: string; children: ReactNode }) {
+  return <div className="action-row"><span><b>{title}</b><small>{hint}</small></span>{children}</div>;
+}
+
 export function SettingsPage() {
   const s = useStore();
-  const { f, bind } = useForm({ name: s.settings.name ?? '', quote: s.settings.quote ?? '', remind_time: s.settings.remind_time ?? '' });
-  const save = async () => {
-    for (const [k, v] of Object.entries(f)) await s.setSetting(k, v);
-    s.toast('Đã lưu cài đặt.');
-  };
+  const [savedProfile, setSavedProfile] = useState(0);
+  const [savedRemind, setSavedRemind] = useState(0);
   const act = (fn: () => Promise<boolean>, ok: string) => async () => { if (await fn()) { await s.reload(); s.toast(ok); } };
   const reset = async () => {
     if (!confirm('Xoá toàn bộ dữ liệu (mục tiêu, nhiệm vụ, biến số, review)? Hãy sao lưu trước.')) return;
     await act(api.reset, 'Đã xoá toàn bộ dữ liệu.')();
   };
-  const actions: [typeof Target, string, string, string, string, () => void][] = [
-    [Database, '#1673ff', 'Sao lưu dữ liệu (.sqlite)', 'Tạo bản sao lưu toàn bộ dữ liệu dưới dạng file SQLite.', 'Sao lưu (.sqlite)', act(api.backup, 'Đã sao lưu file SQLite.')],
-    [Code2, '#12b76a', 'Xuất dữ liệu JSON', 'Xuất toàn bộ dữ liệu ra file JSON để lưu trữ hoặc chuyển đổi.', 'Xuất JSON', act(api.exportJson, 'Đã xuất JSON.')],
-    [FileText, '#8b5cf6', 'Xuất dữ liệu CSV nhiệm vụ', 'Xuất danh sách nhiệm vụ ra file CSV để phân tích.', 'Xuất CSV nhiệm vụ', act(api.exportCsv, 'Đã xuất CSV nhiệm vụ.')],
-    [Upload, '#f79009', 'Khôi phục từ JSON', 'Tải lên file JSON để khôi phục dữ liệu trước đó.', 'Khôi phục từ JSON', act(api.importJson, 'Đã khôi phục từ JSON.')],
-    [FolderOpen, '#475467', 'Mở thư mục dữ liệu', 'Mở thư mục lưu trữ dữ liệu trên máy tính của bạn.', 'Mở thư mục dữ liệu', () => api.openDataDir()],
-    [Trash2, '#f04438', 'Xoá toàn bộ dữ liệu', 'Xoá tất cả dữ liệu vĩnh viễn. Hành động này không thể hoàn tác.', 'Xoá toàn bộ dữ liệu', reset],
-  ];
   return (
-    <div className="stack">
-      <section className="card with-art">
-        <div>
-          <Head icon={<User size={24} />} title="Cá nhân" sub="Quản lý thông tin cá nhân và tuỳ chỉnh trải nghiệm sử dụng.">
-            <button className="btn primary lg" onClick={save}><Save size={16} />Lưu thay đổi</button>
-          </Head>
-          <div className="form">
-            <Field label="Tên hiển thị"><input {...bind('name')} /></Field>
-            <Field label="Giờ nhắc việc ưu tiên mỗi ngày"><input type="time" {...bind('remind_time')} /></Field>
-            <Field label={`Câu nhắc bản thân (${f.quote.length}/200)`} wide><input maxLength={200} {...bind('quote')} /></Field>
-          </div>
-        </div>
-        <ProfileArt />
+    <div className="settings">
+      <section className="card">
+        <header className="sec-head"><h2>Hồ sơ</h2><Saved at={savedProfile} /></header>
+        <SettingInput k="name" label="Tên hiển thị" onSaved={() => setSavedProfile(Date.now())} />
+        <SettingInput k="quote" label="Câu nhắc bản thân" max={200} onSaved={() => setSavedProfile(Date.now())} />
+        <small className="hint">Thay đổi được lưu khi bạn rời ô nhập. Câu nhắc hiện ở đầu trang Tổng quan.</small>
       </section>
-      <section className="card with-art">
-        <div>
-          <Head icon={<Database size={24} />} title="Dữ liệu" sub="Quản lý, sao lưu và khôi phục dữ liệu cá nhân của bạn." />
-          <div className="actions">
-            {actions.map(([Icon, color, title, text, label, run]) => (
-              <div key={title}>
-                <IconTile color={color} size="lg"><Icon size={22} /></IconTile>
-                <span><b>{title}</b><small>{text}</small></span>
-                <button className="tint" style={{ color, background: color + '14' }} onClick={run}>{Icon === Upload ? <Upload size={15} /> : Icon === Trash2 ? <Trash2 size={15} /> : Icon === FolderOpen ? <FolderOpen size={15} /> : <Download size={15} />}{label}</button>
-              </div>
-            ))}
-          </div>
-        </div>
-        <DbArt />
-        <div className="note wide">
-          <IconTile size="lg"><ShieldCheck size={24} /></IconTile>
-          <span><b>Dữ liệu lưu trữ trên máy</b><small>Tất cả dữ liệu được lưu cục bộ trên thiết bị của bạn. DerekOS không thu thập hay gửi dữ liệu ra ngoài. Bạn hoàn toàn kiểm soát dữ liệu của mình.</small></span>
-          <span className="pill"><i />Riêng tư · An toàn</span>
+
+      <section className="card">
+        <header className="sec-head"><h2>Nhắc việc</h2><Saved at={savedRemind} /></header>
+        <SettingInput k="remind_time" type="time" label="Giờ nhắc việc ưu tiên mỗi ngày" onSaved={() => setSavedRemind(Date.now())} />
+        <small className="hint">Vào giờ này, app báo tối đa 3 việc hôm nay chưa xong. Nhắc chỉ chạy khi app đang mở.</small>
+      </section>
+
+      <section className="card full">
+        <header className="sec-head"><h2>Dữ liệu</h2></header>
+        <ActionRow title="Sao lưu dữ liệu" hint="Lưu một bản sao file dữ liệu (.sqlite) ra thư mục bạn chọn.">
+          <button className="btn" onClick={act(api.backup, 'Đã sao lưu file SQLite.')}><Download size={16} />Tạo bản sao lưu</button>
+        </ActionRow>
+        <ActionRow title="Khôi phục từ JSON" hint="Thay toàn bộ dữ liệu hiện có bằng file JSON đã xuất trước đó.">
+          <button className="btn" onClick={act(api.importJson, 'Đã khôi phục từ JSON.')}><Upload size={16} />Chọn tệp</button>
+        </ActionRow>
+        <details className="advanced">
+          <summary><ChevronRight size={16} />Nâng cao</summary>
+          <ActionRow title="Xuất dữ liệu JSON" hint="Toàn bộ dữ liệu, dùng được cho Khôi phục từ JSON.">
+            <button className="btn" onClick={act(api.exportJson, 'Đã xuất JSON.')}><Download size={16} />Xuất JSON</button>
+          </ActionRow>
+          <ActionRow title="Xuất CSV nhiệm vụ" hint="Danh sách nhiệm vụ để mở bằng Excel.">
+            <button className="btn" onClick={act(api.exportCsv, 'Đã xuất CSV nhiệm vụ.')}><Download size={16} />Xuất CSV</button>
+          </ActionRow>
+          <ActionRow title="Thư mục dữ liệu" hint="Nơi lưu file dữ liệu trên máy.">
+            <button className="btn" onClick={() => api.openDataDir()}><FolderOpen size={16} />Mở thư mục</button>
+          </ActionRow>
+        </details>
+        <div className="danger-zone">
+          <ActionRow title="Xoá toàn bộ dữ liệu" hint="Không thể hoàn tác. Hãy sao lưu trước khi xoá.">
+            <button className="btn danger" onClick={reset}><Trash2 size={16} />Xoá dữ liệu</button>
+          </ActionRow>
         </div>
       </section>
     </div>
